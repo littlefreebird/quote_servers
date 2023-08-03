@@ -43,16 +43,10 @@ func main() {
 
 	go func() {
 		time.Sleep(time.Second)
-		a := model.ServerAddr{IP: global.GConfig.IP, Port: global.GConfig.Port}
-		data, err1 := json.Marshal(a)
-		if err1 != nil {
-			log.Fatalf("%+v", err1)
-			return
-		}
-		global.Register, err1 = etcd.NewServiceRegister([]string{global.GConfig.Etcd.Addr}, fmt.Sprintf("%s:%d", global.GConfig.IP, global.GConfig.Port),
-			string(data), 10)
-		if err1 != nil {
-			log.Fatalf("%+v", err1)
+		global.Register, err = etcd.NewServiceRegister([]string{global.GConfig.Etcd.Addr}, fmt.Sprintf("%s:%d", global.GConfig.IP, global.GConfig.Port),
+			fmt.Sprintf("ws://%s:%d/push", global.GConfig.IP, global.GConfig.Port), 10)
+		if err != nil {
+			log.Fatalf("%+v", err)
 			return
 		}
 		for item := range global.Register.GetLeaseRspChan() {

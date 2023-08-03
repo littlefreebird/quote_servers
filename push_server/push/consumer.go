@@ -16,6 +16,7 @@ func ConsumeMsgHandler(msg *sarama.ConsumerMessage) error {
 		log.Errorf("%+v", err)
 		return err
 	}
+	log.Infof("consume stock from kafka:%+v", stock)
 	clients, err := global.RedisClient.GetSet(context.TODO(), stock.Symbol)
 	if err != nil {
 		log.Errorf("%+v", err)
