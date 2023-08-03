@@ -46,9 +46,9 @@ type StockDetail struct {
 }
 
 type StockListResult struct {
-	Page       int           `json:"page"`
-	Num        int           `json:"num"`
-	TotalCount int           `json:"totalCount"`
+	Page       string        `json:"page"`
+	Num        string        `json:"num"`
+	TotalCount string        `json:"totalCount"`
 	Data       []StockDetail `json:"data"`
 }
 

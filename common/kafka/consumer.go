@@ -28,16 +28,23 @@ func (g QuoteConsumerGroupHandler) Cleanup(session sarama.ConsumerGroupSession) 
 	return nil
 }
 func (g QuoteConsumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
-	for msg := range claim.Messages() {
-		err := g.MsgHandler(msg)
-		if err != nil {
-			return err
+	for {
+		select {
+		case msg := <-claim.Messages():
+			err := g.MsgHandler(msg)
+			if err != nil {
+				return err
+			}
+			session.MarkMessage(msg, "")
 		}
 	}
 	return nil
 }
 
 func CreateConsumer(c Config) (*Consumer, error) {
+	config := sarama.NewConfig()
+	config.Consumer.Group.Rebalance.GroupStrategies = []sarama.BalanceStrategy{sarama.NewBalanceStrategyRange()}
+	config.Consumer.Offsets.Initial = sarama.OffsetOldest
 	client, err := sarama.NewConsumerGroup([]string{c.Addr}, c.Group, sarama.NewConfig())
 	if err != nil {
 		return nil, err

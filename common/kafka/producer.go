@@ -16,7 +16,9 @@ type Config struct {
 }
 
 func CreateProducer(c Config) (*Producer, error) {
-	p, err := sarama.NewSyncProducer([]string{c.Addr}, sarama.NewConfig())
+	config := sarama.NewConfig()
+	config.Producer.Return.Successes = true
+	p, err := sarama.NewSyncProducer([]string{c.Addr}, config)
 	if err != nil {
 		return nil, err
 	}
