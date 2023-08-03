@@ -1,13 +1,12 @@
 ip: 0.0.0.0
-port: 9002
+port: 9900
 
 etcd:
   addr: 127.0.0.1:2379
 
 kafka:
-  addr:
-  topic:
-  group:
+  addr: 127.0.0.1:9092
+  topic: quote
 
 log:
   default: #默认日志配置，log.Debug("xxx")
@@ -17,7 +16,7 @@ log:
       level: info                               #本地文件滚动日志的级别
       formatter: json                           #标准输出日志的格式
       writer_config: #本地文件输出具体配置
-        filename: ./log/gate.log          #本地文件滚动日志存放的路径
+        filename: ./log/data_source.log          #本地文件滚动日志存放的路径
         roll_type: size                         #文件滚动类型,size为按大小滚动
         max_age: 7                              #最大日志保留天数
         max_size: 10                            #本地文件滚动日志的大小 单位 MB

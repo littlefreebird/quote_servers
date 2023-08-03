@@ -1,11 +1,15 @@
 package pull
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
+	"io"
+	"os"
 	"quote/common/log"
 	"quote/common/model"
 	"quote/data_source_server/global"
+	"strconv"
 	"time"
 )
 
@@ -18,13 +22,19 @@ var headers = map[string]string{
 }
 
 func GetStockList() {
+	/*file, _ := os.OpenFile("data", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0777)
+	defer file.Close()
+	writer := bufio.NewWriter(file)*/
+	page := 1
 	for {
+		if true {
+			break
+		}
 		params := map[string]string{
-			"key":  "",
+			"key":  "9cbaf6d5eb8336c8e1a1b53e4b2824da",
 			"type": "4",
 		}
 		flag := false
-		page := 1
 		params["page"] = fmt.Sprintf("%d", page)
 		page++
 		response, err := HttpRequest("GET", GetStockListUrl, params, headers, 15)
@@ -43,14 +53,42 @@ func GetStockList() {
 			}
 			for _, item := range rsp.Result.Data {
 				global.CHSendMsg2Push <- item
+				/*bytes, _ := json.Marshal(item)
+				_, err1 := writer.WriteString(string(bytes) + "\n")
+				if err1 != nil {
+					log.Errorf("%+v", err1)
+				}
+				writer.Flush()*/
 			}
-			if rsp.Result.Num == 0 {
+			num, _ := strconv.Atoi(rsp.Result.Num)
+			if num == 0 {
 				flag = true
 			}
 		}
 		if flag {
 			time.Sleep(time.Second * 5)
 			page = 1
+		}
+	}
+	file, _ := os.Open("data")
+	defer file.Close()
+	reader := bufio.NewReader(file)
+	for {
+		count := 0
+		for {
+			count++
+			bytes, err := reader.ReadBytes('\n')
+			if err == io.EOF {
+				break
+			}
+			var stock model.StockDetail
+			err = json.Unmarshal(bytes, &stock)
+			if err == nil {
+				global.CHSendMsg2Push <- stock
+			}
+			if count%10 == 0 {
+				time.Sleep(time.Second * 5)
+			}
 		}
 	}
 }
