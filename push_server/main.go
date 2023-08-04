@@ -12,6 +12,7 @@ import (
 	"quote/common/log"
 	"quote/common/model"
 	"quote/common/redis"
+	"quote/gate_server/discover"
 	"quote/push_server/config"
 	"quote/push_server/global"
 	"quote/push_server/push"
@@ -43,7 +44,7 @@ func main() {
 
 	go func() {
 		time.Sleep(time.Second)
-		global.Register, err = etcd.NewServiceRegister([]string{global.GConfig.Etcd.Addr}, fmt.Sprintf("%s:%d", global.GConfig.IP, global.GConfig.Port),
+		global.Register, err = etcd.NewServiceRegister([]string{global.GConfig.Etcd.Addr}, discover.PushServerPrefix+fmt.Sprintf("%s:%d", global.GConfig.IP, global.GConfig.Port),
 			fmt.Sprintf("ws://%s:%d/push", global.GConfig.IP, global.GConfig.Port), 10)
 		if err != nil {
 			log.Fatalf("%+v", err)
