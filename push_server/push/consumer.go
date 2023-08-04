@@ -21,17 +21,14 @@ func ConsumeMsgHandler(msg *sarama.ConsumerMessage) error {
 		log.Errorf("%+v", err)
 		return err
 	}
-	// for debug
-	return nil
 	clients, err := global.RedisClient.GetSet(context.TODO(), stock.Symbol)
-	if err != nil {
-		log.Errorf("%+v", err)
-		return err
+	if len(clients) == 0 {
+		return nil
 	}
+	log.Infof("%s's subscribers: %v", stock.Symbol, clients)
 	go func() {
 		var arrDel []string
 		for _, item := range clients {
-			var err1 error
 			gate, err1 := global.RedisClient.Get(context.TODO(), item)
 			if err1 != nil {
 				log.Errorf("%+v", err1)

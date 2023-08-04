@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
+	"net/http"
 	"quote/common/log"
 	"quote/common/model"
 	"quote/gate_server/global"
@@ -15,13 +16,15 @@ const (
 
 func PutHandler(k, v string) error {
 	go func() {
-		c, _, err := websocket.DefaultDialer.Dial(v, nil)
+		header := http.Header{}
+		header.Add("ClientID", fmt.Sprintf("%d", global.ClientID))
+		c, _, err := websocket.DefaultDialer.Dial(v, header)
 		if err != nil {
 			log.Fatalf("%+v", err)
 			return
 		}
 		log.Infof("connected with %s", c.RemoteAddr().String())
-		global.PushServers.Put(c.RemoteAddr().String(), c)
+		global.PushServers.Put(v, c)
 		defer c.Close()
 
 		// receive message from push
@@ -51,12 +54,6 @@ func PutHandler(k, v string) error {
 }
 
 func DelHandler(k, v string) error {
-	var a model.ServerAddr
-	err := json.Unmarshal([]byte(v), &a)
-	if err != nil {
-		log.Errorf("%+v", err)
-		return err
-	}
-	global.PushServers.Del(fmt.Sprintf("%s:%d", a.IP, a.Port))
+	global.PushServers.Del(v)
 	return nil
 }

@@ -1,6 +1,7 @@
 package global
 
 import (
+	"github.com/google/uuid"
 	"quote/common/etcd"
 	"quote/common/redis"
 	"quote/gate_server/config"
@@ -13,4 +14,9 @@ var (
 	Clients     *relay.Clients
 	Discover    *etcd.ServiceDiscover
 	PushServers *relay.PushServers
+	ClientID    int
 )
+
+func init() {
+	ClientID = int(uuid.New().ID())
+}

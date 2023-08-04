@@ -84,7 +84,7 @@ func msgHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Infof("%s connected", ws.RemoteAddr().String())
-	push.GGateServers.Put(ws.RemoteAddr().String(), ws)
+	push.GGateServers.Put(r.Header.Get("ClientID"), ws)
 	defer func() {
 		push.GGateServers.Del(ws.RemoteAddr().String())
 		ws.Close()

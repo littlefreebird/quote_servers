@@ -66,7 +66,7 @@ func clientMsgHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	clientId := r.Header.Get("ClientID")
-	val := fmt.Sprintf("%v", ws.LocalAddr().String())
+	val := fmt.Sprintf("%d", global.ClientID)
 	err = global.RedisClient.Set(context.TODO(), clientId, val, time.Second*60)
 	if err != nil {
 		log.Errorf("%+v", err)
@@ -80,6 +80,9 @@ func clientMsgHandler(w http.ResponseWriter, r *http.Request) {
 			log.Errorf("%+v", err1)
 			break
 		}
+		if len(data) == 0 {
+			break
+		}
 		var msg model.MsgStruct
 		err1 = json.Unmarshal(data, &msg)
 		if err != nil {
@@ -88,7 +91,7 @@ func clientMsgHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		switch msg.MsgID {
 		case model.MsgIDHeartBeat:
-			log.Infof("heartbeat from %s to %s", string(msg.Data), val)
+			log.Infof("heartbeat from client %s to  gate %s", string(msg.Data), val)
 			global.RedisClient.Set(context.TODO(), string(msg.Data), val, time.Second*60)
 			data, _ = json.Marshal(model.MsgStruct{
 				MsgID: model.MsgIDHeartBeat,

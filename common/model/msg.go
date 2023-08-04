@@ -40,6 +40,7 @@ type StockDetail struct {
 	EnName        string `json:"engname"`
 	LastTrade     string `json:"lasttrade"`
 	ChangePercent string `json:"changepercent"`
+	Version       int    `json:"version"`
 }
 
 type StockListResult struct {

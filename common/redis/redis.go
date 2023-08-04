@@ -40,14 +40,12 @@ func (r *Redis) SAdd(ctx context.Context, key, val string) error {
 
 func (r *Redis) GetSet(ctx context.Context, key string) ([]string, error) {
 	var ret []string
-	err := r.Client.Get(ctx, key).Scan(&ret)
+	ret, err := r.Client.SMembers(ctx, key).Result()
 	return ret, err
 }
 
 func (r *Redis) Get(ctx context.Context, key string) (string, error) {
-	var ret string
-	err := r.Client.Get(ctx, key).Scan(&ret)
-	return ret, err
+	return r.Client.Get(ctx, key).Result()
 }
 
 func (r *Redis) SRem(ctx context.Context, key, val string) error {

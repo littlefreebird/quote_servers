@@ -19,8 +19,15 @@ const (
 	gateSvrAddr = "ws://127.0.0.1:9700/gate"
 )
 
-var stockChoices = []string{"00700", "01024", "02318", "01070", "00763", "03690", "03888", "01810", "09988", "00941",
-	"00939", "00386", "01398", "03988", "01357", "02007", "02202", "02628", "02238", "00489"}
+var stockChoices = []string{
+	"00001", "00002", "00003", "00004", "00005", "00006", "00007", "00008", "00009", "00010", "00011", "00012", "00013", "00014",
+	"00016", "00017", "00018", "00019", "00020", "00021", "00022", "00023", "00025", "00026", "00027", "00028", "00029", "00030",
+	"00031", "00032", "00033", "00034", "00035", "00036", "00037", "00038", "00039", "00040", "00041", "00042", "00045", "00046",
+	"00048", "00050", "00051", "00052", "00053", "00055", "00057", "00058", "00059", "00060", "00061", "00062", "00063", "00064",
+	"00065", "00066", "00069", "00070", "00071", "00072", "00073", "00075", "00076", "00077", "00078", "00079", "00080", "00081",
+	"00082", "00083", "00084", "00085", "00086", "00087", "00088", "00089", "00090", "00091", "00092", "00093", "00094", "00095",
+	"00096", "00097", "00098", "00099", "00101", "00102", "00103", "00104", "00105", "00106", "00107", "00108", "00110", "00111",
+	"00113", "00114"}
 
 var subStocks = make(map[string]*model.StockDetail)
 var unsubStocks = make(map[string]*model.StockDetail)
@@ -69,9 +76,9 @@ func main() {
 	}()
 
 	go func() {
-		hbTicker := time.NewTicker(time.Second * 10)
-		subTicket := time.NewTicker(time.Second * 30)
-		printTicker := time.NewTicker(time.Second * 15)
+		hbTicker := time.NewTicker(time.Second * 30)
+		subTicket := time.NewTicker(time.Second * 10)
+		printTicker := time.NewTicker(time.Second * 5)
 		for {
 			select {
 			case <-hbTicker.C:
@@ -104,8 +111,8 @@ func printStock() {
 		if subStocks[item] == nil {
 			continue
 		}
-		content += fmt.Sprintf("%s\t\t%s\t\t%s\t\t%s\n", subStocks[item].Symbol, subStocks[item].Name,
-			subStocks[item].LastTrade, subStocks[item].ChangePercent)
+		content += fmt.Sprintf("\n%s\t\t%s\t\t%s\t\t%s\t\t%d\n", subStocks[item].Symbol, subStocks[item].Name,
+			subStocks[item].LastTrade, subStocks[item].ChangePercent, subStocks[item].Version)
 	}
 	if content != "" {
 		log.Info(content)
@@ -152,13 +159,34 @@ func sendHeartbeat(ws *websocket.Conn) {
 }
 
 func subscribe(ws *websocket.Conn) {
-	stock, flag := getSubscribeStock()
 	var msg model.MsgStruct
+	flag := true
+	if rand.Float64() > 0.7 {
+		flag = false
+	}
+	if len(subStocks) > 10 {
+		flag = false
+	}
+	if len(subStocks) == 0 {
+		flag = true
+	}
 	if flag {
+		stock := stockChoices[rand.Intn(100)]
 		msg.Data, _ = json.Marshal(model.SubscribeReqData{ClientID: ClientID, StockID: stock})
 		msg.MsgID = model.MsgIDSubscribe
 		log.Infof("subscribe %s", stock)
 	} else {
+		i := 0
+		r := rand.Intn(len(subStocks))
+		var stock string
+		for k, _ := range subStocks {
+			if i == r {
+				stock = k
+				break
+			}
+			i++
+		}
+		delete(subStocks, stock)
 		msg.Data, _ = json.Marshal(model.UnsubscribeReqData{ClientID: ClientID, StockID: stock})
 		msg.MsgID = model.MsgIDUnsubscribe
 		log.Infof("unsubscribe %s", stock)
@@ -171,56 +199,4 @@ func subscribe(ws *websocket.Conn) {
 	if err != nil {
 		log.Errorf("%+v", err)
 	}
-}
-
-func getSubscribeStock() (string, bool) {
-	if len(subStocks) >= 10 {
-		idx := random.Intn(len(subStocks))
-		i := 0
-		for k, _ := range subStocks {
-			if i == idx {
-				delete(subStocks, k)
-				unsubStocks[k] = nil
-				return k, false
-			}
-			i++
-		}
-	} else if len(subStocks) == 0 {
-		idx := random.Intn(len(unsubStocks))
-		i := 0
-		for k, _ := range unsubStocks {
-			if i == idx {
-				delete(unsubStocks, k)
-				subStocks[k] = nil
-				return k, true
-			}
-			i++
-		}
-	} else {
-		f := random.Float64()
-		if f < 0.7 {
-			idx := random.Intn(len(unsubStocks))
-			i := 0
-			for k, _ := range unsubStocks {
-				if i == idx {
-					delete(unsubStocks, k)
-					subStocks[k] = nil
-					return k, true
-				}
-				i++
-			}
-		} else {
-			idx := random.Intn(len(subStocks))
-			i := 0
-			for k, _ := range subStocks {
-				if i == idx {
-					delete(subStocks, k)
-					unsubStocks[k] = nil
-					return k, false
-				}
-				i++
-			}
-		}
-	}
-	return "", false
 }

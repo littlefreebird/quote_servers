@@ -70,25 +70,28 @@ func GetStockList() {
 			page = 1
 		}
 	}
-	file, _ := os.Open("data")
+	file, _ := os.Open("data1")
 	defer file.Close()
 	reader := bufio.NewReader(file)
+	version := 0
+	count := 0
 	for {
-		count := 0
-		for {
-			count++
-			bytes, err := reader.ReadBytes('\n')
-			if err == io.EOF {
-				file.Seek(0, io.SeekStart)
-			}
-			var stock model.StockDetail
-			err = json.Unmarshal(bytes, &stock)
-			if err == nil {
-				global.CHSendMsg2Push <- stock
-			}
-			if count%20 == 0 {
-				time.Sleep(time.Second)
-			}
+		count++
+		bytes, err := reader.ReadBytes('\n')
+		if err == io.EOF {
+			file.Seek(0, io.SeekStart)
+			count = 0
+			version++
+			continue
+		}
+		var stock model.StockDetail
+		err = json.Unmarshal(bytes, &stock)
+		stock.Version = version
+		if err == nil {
+			global.CHSendMsg2Push <- stock
+		}
+		if count%20 == 0 {
+			time.Sleep(time.Second)
 		}
 	}
 }
