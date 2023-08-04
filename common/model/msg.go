@@ -29,9 +29,6 @@ type UnsubscribeReqData struct {
 	StockID  string `json:"stock_id"`
 }
 
-type PushStockData struct {
-}
-
 type ServerAddr struct {
 	IP   string `json:"ip"`
 	Port int    `json:"port"`

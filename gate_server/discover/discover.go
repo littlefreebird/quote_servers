@@ -20,6 +20,8 @@ func PutHandler(k, v string) error {
 			log.Fatalf("%+v", err)
 			return
 		}
+		log.Infof("connected with %s", c.RemoteAddr().String())
+		global.PushServers.Put(c.RemoteAddr().String(), c)
 		defer c.Close()
 
 		// receive message from push

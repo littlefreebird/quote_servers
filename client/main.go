@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"math/rand"
+	"net/http"
 	"os"
 	"os/signal"
 	"quote/common/log"
@@ -38,12 +39,14 @@ func main() {
 	for _, item := range stockChoices {
 		unsubStocks[item] = nil
 	}
-
-	c, _, err := websocket.DefaultDialer.Dial(gateSvrAddr, nil)
+	header := http.Header{}
+	header.Add("ClientID", fmt.Sprintf("%d", ClientID))
+	c, _, err := websocket.DefaultDialer.Dial(gateSvrAddr, header)
 	if err != nil {
 		log.Fatalf("%+v", err)
 		return
 	}
+	log.Infof("connected with %s", c.RemoteAddr().String())
 	defer c.Close()
 
 	// receive message from gate
@@ -52,6 +55,9 @@ func main() {
 			_, data, err1 := c.ReadMessage()
 			if err1 != nil {
 				log.Fatalf("%+v", err1)
+				return
+			}
+			if len(data) == 0 {
 				return
 			}
 			err1 = msgHandler(data)
@@ -64,8 +70,8 @@ func main() {
 
 	go func() {
 		hbTicker := time.NewTicker(time.Second * 10)
-		subTicket := time.NewTicker(time.Second * 15)
-		printTicker := time.NewTicker(time.Second * 20)
+		subTicket := time.NewTicker(time.Second * 30)
+		printTicker := time.NewTicker(time.Second * 15)
 		for {
 			select {
 			case <-hbTicker.C:
@@ -134,9 +140,9 @@ func updateStock(data []byte) {
 }
 
 func sendHeartbeat(ws *websocket.Conn) {
-	log.Info("send heartbeat")
 	hb := model.MsgStruct{
 		MsgID: model.MsgIDHeartBeat,
+		Data:  []byte(fmt.Sprintf("%d", ClientID)),
 	}
 	hbData, _ := json.Marshal(hb)
 	err := ws.WriteMessage(websocket.TextMessage, hbData)

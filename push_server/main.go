@@ -83,7 +83,12 @@ func msgHandler(w http.ResponseWriter, r *http.Request) {
 		log.Errorf("%+v", err)
 		return
 	}
-	defer ws.Close()
+	log.Infof("%s connected", ws.RemoteAddr().String())
+	push.GGateServers.Put(ws.RemoteAddr().String(), ws)
+	defer func() {
+		push.GGateServers.Del(ws.RemoteAddr().String())
+		ws.Close()
+	}()
 	for {
 		_, data, err1 := ws.ReadMessage()
 		if err != nil {
