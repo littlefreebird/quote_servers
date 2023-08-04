@@ -42,10 +42,10 @@ func main() {
 	global.RedisClient = redis.NewRedisClient(redis.Config{Addr: global.GConfig.Redis.Addr})
 	// relay msg to clients
 	global.Clients = relay.NewClients()
-	global.Clients.RelayDownMsg()
+	go global.Clients.RelayDownMsg()
 	// relay msg to push server
 	global.PushServers = relay.NewPushServers()
-	global.PushServers.RelayUpMsg()
+	go global.PushServers.RelayUpMsg()
 	// push servers discover
 	global.Discover, err = etcd.NewServiceDiscover([]string{global.GConfig.Etcd.Addr})
 	if err != nil {

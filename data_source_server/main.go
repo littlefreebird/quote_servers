@@ -48,7 +48,6 @@ func main() {
 		select {
 		case msg := <-global.CHSendMsg2Push:
 			data, _ := json.Marshal(msg)
-			log.Infof("send stock to kafka: %+v", msg)
 			err1 := global.Producer.SendMessage(data)
 			if err1 != nil {
 				log.Errorf("%+v", err1)

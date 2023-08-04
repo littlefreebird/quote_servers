@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	"github.com/IBM/sarama"
+	"quote/common/log"
 )
 
 type Consumer struct {
@@ -35,6 +36,7 @@ func (g QuoteConsumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSess
 			if err != nil {
 				return err
 			}
+			log.Infof("consume kafka, topic:%s, partition:%d, offset:%d, time:%v", msg.Topic, msg.Partition, msg.Offset, msg.Timestamp)
 			session.MarkMessage(msg, "")
 		}
 	}

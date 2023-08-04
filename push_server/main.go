@@ -49,8 +49,13 @@ func main() {
 			log.Fatalf("%+v", err)
 			return
 		}
+		count := 0
 		for item := range global.Register.GetLeaseRspChan() {
-			log.Infof("etcd response: %+v", item)
+			count++
+			if count == 30 {
+				log.Infof("etcd response: %+v", item)
+				count = 0
+			}
 		}
 	}()
 

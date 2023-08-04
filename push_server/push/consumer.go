@@ -3,6 +3,7 @@ package push
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"github.com/IBM/sarama"
 	"quote/common/log"
 	"quote/common/model"
@@ -11,12 +12,17 @@ import (
 
 func ConsumeMsgHandler(msg *sarama.ConsumerMessage) error {
 	var stock model.StockDetail
+	if msg == nil || msg.Value == nil {
+		log.Errorf("wrong message")
+		return errors.New("wrong message")
+	}
 	err := json.Unmarshal(msg.Value, &stock)
 	if err != nil {
 		log.Errorf("%+v", err)
 		return err
 	}
-	log.Infof("consume stock from kafka:%+v", stock)
+	// for debug
+	return nil
 	clients, err := global.RedisClient.GetSet(context.TODO(), stock.Symbol)
 	if err != nil {
 		log.Errorf("%+v", err)

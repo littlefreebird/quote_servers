@@ -5,13 +5,13 @@ import (
 	"math/rand"
 	"quote/common/log"
 	"sync"
+	"time"
 )
 
 type PushServers struct {
 	Servers    map[string]*websocket.Conn
 	CHMsg2Push chan []byte
 	lock       sync.RWMutex
-	rand       *rand.Rand
 }
 
 func NewPushServers() *PushServers {
@@ -19,7 +19,7 @@ func NewPushServers() *PushServers {
 		Servers:    make(map[string]*websocket.Conn),
 		CHMsg2Push: make(chan []byte, 1024),
 	}
-	ret.rand.Seed(0)
+	rand.Seed(time.Now().UnixNano())
 	return ret
 }
 
@@ -38,7 +38,7 @@ func (s *PushServers) Del(a string) {
 func (s *PushServers) Get() *websocket.Conn {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
-	idx := s.rand.Intn(len(s.Servers))
+	idx := rand.Intn(len(s.Servers))
 	i := 0
 	for _, v := range s.Servers {
 		if i == idx {

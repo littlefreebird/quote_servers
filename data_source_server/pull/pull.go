@@ -79,15 +79,15 @@ func GetStockList() {
 			count++
 			bytes, err := reader.ReadBytes('\n')
 			if err == io.EOF {
-				break
+				file.Seek(0, io.SeekStart)
 			}
 			var stock model.StockDetail
 			err = json.Unmarshal(bytes, &stock)
 			if err == nil {
 				global.CHSendMsg2Push <- stock
 			}
-			if count%10 == 0 {
-				time.Sleep(time.Second * 5)
+			if count%20 == 0 {
+				time.Sleep(time.Second)
 			}
 		}
 	}

@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"github.com/IBM/sarama"
+	"quote/common/log"
 )
 
 type Producer struct {
@@ -36,6 +37,9 @@ func (p *Producer) SendMessage(data []byte) error {
 	msg := &sarama.ProducerMessage{}
 	msg.Topic = p.Topic
 	msg.Value = sarama.ByteEncoder(data)
-	_, _, err := p.Client.SendMessage(msg)
+	partition, offset, err := p.Client.SendMessage(msg)
+	if err == nil {
+		log.Infof("produce kafka, topic:%s, partition:%d, offset:%d ", msg.Topic, partition, offset)
+	}
 	return err
 }
