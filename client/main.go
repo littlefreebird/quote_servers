@@ -11,12 +11,11 @@ import (
 	"quote/common/log"
 	"quote/common/model"
 	"sort"
-	"sync"
 	"time"
 )
 
 const (
-	gateSvrAddr = "ws://127.0.0.1:8080/gate"
+	gateSvrAddr = "ws://127.0.0.1:9700/gate"
 )
 
 var stockChoices = []string{"00700", "01024", "02318", "01070", "00763", "03690", "03888", "01810", "09988", "00941",
@@ -24,16 +23,15 @@ var stockChoices = []string{"00700", "01024", "02318", "01070", "00763", "03690"
 
 var subStocks = make(map[string]*model.StockDetail)
 var unsubStocks = make(map[string]*model.StockDetail)
+var chUpdate = make(chan []byte)
 
-var lock sync.RWMutex
-var uidGenerator uuid.UUID
 var random *rand.Rand
+var ClientID int
 
 func main() {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
-	chMsg2Gate := make(chan []byte)
-	uidGenerator = uuid.New()
+	ClientID = int(uuid.New().ID())
 	s := rand.NewSource(time.Now().UnixNano())
 	random = rand.New(s)
 
@@ -64,85 +62,22 @@ func main() {
 		}
 	}()
 
-	// send message to gate
 	go func() {
+		hbTicker := time.NewTicker(time.Second * 10)
+		subTicket := time.NewTicker(time.Second * 15)
+		printTicker := time.NewTicker(time.Second * 20)
 		for {
 			select {
-			case data := <-chMsg2Gate:
-				if err2 := c.WriteMessage(websocket.TextMessage, data); err2 != nil {
-					log.Fatalf("%+v", err2)
-					return
-				}
+			case <-hbTicker.C:
+				sendHeartbeat(c)
+			case <-subTicket.C:
+				subscribe(c)
+			case <-printTicker.C:
+				printStock()
+			case data := <-chUpdate:
+				updateStock(data)
 			}
 		}
-	}()
-
-	// send heartbeat to gate
-	go func() {
-		ticker := time.NewTicker(time.Second * 10)
-		for {
-			select {
-			case <-ticker.C:
-				hb := model.MsgStruct{
-					MsgID: model.MsgIDHeartBeat,
-				}
-				hbData, _ := json.Marshal(hb)
-				chMsg2Gate <- hbData
-			}
-		}
-		ticker.Stop()
-	}()
-
-	// subscribe
-	go func() {
-		ticker := time.NewTicker(time.Second * 15)
-		for {
-			select {
-			case <-ticker.C:
-				stock, flag := getSubscribeStock()
-				var msg model.MsgStruct
-				if flag {
-					msg.Data, _ = json.Marshal(model.SubscribeReqData{ClientID: fmt.Sprintf("%d", uidGenerator.ID()),
-						StockID: stock})
-					msg.MsgID = model.MsgIDSubscribe
-				} else {
-					msg.Data, _ = json.Marshal(model.UnsubscribeReqData{ClientID: fmt.Sprintf("%d", uidGenerator.ID()),
-						StockID: stock})
-					msg.MsgID = model.MsgIDUnsubscribe
-				}
-				var wrapperMsg model.MsgStruct
-				wrapperMsg.MsgID = model.MsgIDClientAndPush
-				wrapperMsg.Data, _ = json.Marshal(msg)
-				data, _ := json.Marshal(wrapperMsg)
-				chMsg2Gate <- data
-			}
-		}
-		ticker.Stop()
-	}()
-
-	// print stock
-	go func() {
-		ticker := time.NewTicker(time.Second * 10)
-		for {
-			select {
-			case <-ticker.C:
-				var arrStocks []string
-				stocksCopy := cloneSubStocks()
-				for k, _ := range stocksCopy {
-					arrStocks = append(arrStocks, k)
-				}
-				sort.Strings(arrStocks)
-				var content string
-				for _, item := range arrStocks {
-					content += fmt.Sprintf("%s\t\t%s\t\t%s\t\t%s\n", stocksCopy[item].Symbol, stocksCopy[item].Name,
-						stocksCopy[item].LastTrade, stocksCopy[item].ChangePercent)
-				}
-				if content != "" {
-					log.Info(content)
-				}
-			}
-		}
-		ticker.Stop()
 	}()
 
 	select {
@@ -151,16 +86,24 @@ func main() {
 	}
 }
 
-func cloneSubStocks() map[string]*model.StockDetail {
-	lock.RLock()
-	defer lock.RUnlock()
-	ret := make(map[string]*model.StockDetail)
-	for k, v := range subStocks {
-		if v != nil {
-			ret[k] = v
-		}
+func printStock() {
+	log.Info("print stocks")
+	var arrStocks []string
+	for k, _ := range subStocks {
+		arrStocks = append(arrStocks, k)
 	}
-	return ret
+	sort.Strings(arrStocks)
+	var content string
+	for _, item := range arrStocks {
+		if subStocks[item] == nil {
+			continue
+		}
+		content += fmt.Sprintf("%s\t\t%s\t\t%s\t\t%s\n", subStocks[item].Symbol, subStocks[item].Name,
+			subStocks[item].LastTrade, subStocks[item].ChangePercent)
+	}
+	if content != "" {
+		log.Info(content)
+	}
 }
 
 func msgHandler(data []byte) error {
@@ -173,7 +116,7 @@ func msgHandler(data []byte) error {
 	case model.MsgIDHeartBeat:
 		log.Info("heartbeat response")
 	case model.MsgIDStock:
-		updateStock(msg.Data)
+		chUpdate <- msg.Data
 	default:
 		log.Info("unknown msg")
 	}
@@ -187,14 +130,44 @@ func updateStock(data []byte) {
 		log.Errorf("%+v", err)
 		return
 	}
-	lock.Lock()
-	defer lock.Unlock()
 	subStocks[stockDetail.Symbol] = &stockDetail
 }
 
+func sendHeartbeat(ws *websocket.Conn) {
+	log.Info("send heartbeat")
+	hb := model.MsgStruct{
+		MsgID: model.MsgIDHeartBeat,
+	}
+	hbData, _ := json.Marshal(hb)
+	err := ws.WriteMessage(websocket.TextMessage, hbData)
+	if err != nil {
+		log.Errorf("%+v", err)
+	}
+}
+
+func subscribe(ws *websocket.Conn) {
+	stock, flag := getSubscribeStock()
+	var msg model.MsgStruct
+	if flag {
+		msg.Data, _ = json.Marshal(model.SubscribeReqData{ClientID: ClientID, StockID: stock})
+		msg.MsgID = model.MsgIDSubscribe
+		log.Infof("subscribe %s", stock)
+	} else {
+		msg.Data, _ = json.Marshal(model.UnsubscribeReqData{ClientID: ClientID, StockID: stock})
+		msg.MsgID = model.MsgIDUnsubscribe
+		log.Infof("unsubscribe %s", stock)
+	}
+	var wrapperMsg model.MsgStruct
+	wrapperMsg.MsgID = model.MsgIDClientAndPush
+	wrapperMsg.Data, _ = json.Marshal(msg)
+	data, _ := json.Marshal(wrapperMsg)
+	err := ws.WriteMessage(websocket.TextMessage, data)
+	if err != nil {
+		log.Errorf("%+v", err)
+	}
+}
+
 func getSubscribeStock() (string, bool) {
-	lock.RLock()
-	defer lock.RUnlock()
 	if len(subStocks) >= 10 {
 		idx := random.Intn(len(subStocks))
 		i := 0
@@ -218,9 +191,9 @@ func getSubscribeStock() (string, bool) {
 			i++
 		}
 	} else {
-		idx := random.Intn(1)
-		if idx == 1 {
-			idx = random.Intn(len(unsubStocks))
+		f := random.Float64()
+		if f < 0.7 {
+			idx := random.Intn(len(unsubStocks))
 			i := 0
 			for k, _ := range unsubStocks {
 				if i == idx {
@@ -231,7 +204,7 @@ func getSubscribeStock() (string, bool) {
 				i++
 			}
 		} else {
-			idx = random.Intn(len(subStocks))
+			idx := random.Intn(len(subStocks))
 			i := 0
 			for k, _ := range subStocks {
 				if i == idx {

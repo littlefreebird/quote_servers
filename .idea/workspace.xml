@@ -5,14 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a6a7d5fd-d7aa-4af0-a7be-735599c45167" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/data_source_server/config/config.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/data_source_server/config/config.yaml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/data_source_server/global/global.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/data_source_server/main.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/data_source_server/pull/pull.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/push_server/config/config.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/push_server/config/config.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/client/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/client/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common/model/msg.go" beforeDir="false" afterPath="$PROJECT_DIR$/common/model/msg.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data_source_server/config/config.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/data_source_server/config/config.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gate_server/config/config.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/gate_server/config/config.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gate_server/discover/discover.go" beforeDir="false" afterPath="$PROJECT_DIR$/gate_server/discover/discover.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gate_server/relay/push.go" beforeDir="false" afterPath="$PROJECT_DIR$/gate_server/relay/push.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/push_server/config/config.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/push_server/config/config.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/push_server/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/push_server/main.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -51,7 +52,7 @@
     &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
     &quot;go.import.settings.migrated&quot;: &quot;true&quot;,
     &quot;go.sdk.automatically.set&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/tonnyliu/go/quote_servers/data_source_server&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/tonnyliu/go/quote_servers&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;
   }
 }</component>

@@ -38,6 +38,9 @@ func (s *PushServers) Del(a string) {
 func (s *PushServers) Get() *websocket.Conn {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
+	if len(s.Servers) == 0 {
+		return nil
+	}
 	idx := rand.Intn(len(s.Servers))
 	i := 0
 	for _, v := range s.Servers {
@@ -61,6 +64,7 @@ func (s *PushServers) RelayUpMsg() {
 			if c == nil {
 				log.Info("no push server connected")
 			} else {
+				log.Info("send msg to push")
 				err := c.WriteMessage(websocket.TextMessage, data)
 				if err != nil {
 					log.Errorf("%+v", err)

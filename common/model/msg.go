@@ -20,12 +20,12 @@ type PushMsgStruct struct {
 }
 
 type SubscribeReqData struct {
-	ClientID string `json:"client_id"`
+	ClientID int    `json:"client_id"`
 	StockID  string `json:"stock_id"`
 }
 
 type UnsubscribeReqData struct {
-	ClientID string `json:"client_id"`
+	ClientID int    `json:"client_id"`
 	StockID  string `json:"stock_id"`
 }
 

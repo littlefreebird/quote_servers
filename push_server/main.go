@@ -90,6 +90,9 @@ func msgHandler(w http.ResponseWriter, r *http.Request) {
 			log.Errorf("%+v", err1)
 			break
 		}
+		if len(data) == 0 {
+			break
+		}
 		var msg model.MsgStruct
 		err1 = json.Unmarshal(data, &msg)
 		if err != nil {
@@ -104,7 +107,7 @@ func msgHandler(w http.ResponseWriter, r *http.Request) {
 				log.Errorf("%+v", err1)
 				continue
 			}
-			global.RedisClient.SAdd(context.TODO(), s.StockID, s.ClientID)
+			global.RedisClient.SAdd(context.TODO(), s.StockID, fmt.Sprintf("%d", s.ClientID))
 		case model.MsgIDUnsubscribe:
 			var us model.UnsubscribeReqData
 			err1 = json.Unmarshal(msg.Data, &us)
@@ -112,7 +115,7 @@ func msgHandler(w http.ResponseWriter, r *http.Request) {
 				log.Errorf("%+v", err1)
 				continue
 			}
-			global.RedisClient.SRem(context.TODO(), us.StockID, us.ClientID)
+			global.RedisClient.SRem(context.TODO(), us.StockID, fmt.Sprintf("%d", us.ClientID))
 		default:
 			log.Info("unknown msg")
 		}
