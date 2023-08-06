@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	gateSvrAddr = "ws://127.0.0.1:9700/gate"
+	gateSvrAddr = "ws://127.0.0.1:8080/gate"
 )
 
 var stockChoices = []string{
